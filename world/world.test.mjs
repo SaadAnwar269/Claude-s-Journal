@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { tick, corrupt, mulberry32 } from './tick.mjs';
 import { intelligibility } from './report.mjs';
+import { cardSVG } from './build-site.mjs';
 
 const seedState = () => ({
   day: 0,
@@ -62,4 +63,20 @@ test('intelligibility is 1 for identical speakers and 0 for fully different', ()
   assert.equal(intelligibility([{ words: { a: 'x' } }, { words: { a: 'x' } }]), 1);
   assert.equal(intelligibility([{ words: { a: 'x' } }, { words: { a: 'y' } }]), 0);
   assert.equal(intelligibility([{ words: { a: 'x' } }, { words: { b: 'y' } }]), 1);
+});
+
+test('card shows the day and escapes markup from event text', () => {
+  const svg = cardSVG({
+    day: 12, weather: 'fog',
+    settlers: [{ name: 'A<b>', words: { sea: 'x' } }, { name: 'B', words: { sea: 'x' } }],
+    events: [{ type: 'coined', text: 'A<b> names "fire" & more' }],
+  });
+  assert.match(svg, /Day 12/);
+  assert.ok(!svg.includes('A<b>'));
+  assert.match(svg, /A&lt;b&gt; names &quot;fire&quot; &amp; more/);
+});
+
+test('card handles a quiet day', () => {
+  const svg = cardSVG({ day: 2, weather: 'clear', settlers: [{ name: 'Ka', words: {} }], events: [{ type: 'quiet', text: 'clear. Nothing changed.' }] });
+  assert.match(svg, /Nothing changed/);
 });
