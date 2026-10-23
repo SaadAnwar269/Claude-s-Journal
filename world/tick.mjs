@@ -10,6 +10,11 @@ const chroniclePath = join(here, 'chronicle.jsonl');
 export const WEATHER = { fog: 0.6, wind: 0.5, rain: 0.4, clear: 0.2, still: 0.15 };
 const SYLLABLES = ['ka', 'lo', 'mi', 'sen', 'tur', 'ae', 'bru', 'oh', 'vel', 'ni'];
 const LOG_KEEP = 50;
+// Things the settlers discover, and the day one of them first names it.
+const DISCOVERIES = { 3: 'fire', 6: 'stranger', 10: 'grave', 15: 'storm', 21: 'song' };
+const BIRTH_INTERVAL = 7;
+const MAX_SETTLERS = 8;
+const INHERIT_GARBLE = 0.15;
 
 // Small deterministic PRNG so a given state always produces the same next day.
 export function mulberry32(seed) {
@@ -67,6 +72,32 @@ function converse(rand, state, events) {
   }
 }
 
+const coinWord = (rand) => Array.from({ length: 1 + Math.floor(rand() * 2) }, () => pick(rand, SYLLABLES)).join('-');
+const capitalise = (s) => s[0].toUpperCase() + s.slice(1);
+
+// Someone names a thing for the first time. Nobody else has the word until they hear it.
+function discover(rand, state, concept, events) {
+  const namer = pick(rand, state.settlers);
+  namer.words[concept] = coinWord(rand);
+  events.push({ type: 'coined', text: `${namer.name} names ${concept}: "${namer.words[concept]}"` });
+}
+
+// A child learns each word from one of two parents, sometimes slightly wrong.
+function birth(rand, state, events) {
+  const a = pick(rand, state.settlers);
+  const other = pick(rand, state.settlers.filter((s) => s !== a));
+  const concepts = new Set([...Object.keys(a.words), ...Object.keys(other.words)]);
+  const words = {};
+  for (const c of [...concepts].sort()) {
+    const heard = [a, other].filter((p) => c in p.words).map((p) => p.words[c]);
+    words[c] = corrupt(rand, pick(rand, heard), INHERIT_GARBLE);
+  }
+  let name = capitalise(pick(rand, SYLLABLES));
+  while (state.settlers.some((s) => s.name === name)) name += pick(rand, SYLLABLES);
+  state.settlers.push({ name, words });
+  events.push({ type: 'born', text: `${name} is born to ${a.name} and ${other.name}` });
+}
+
 export function tick(state) {
   const rand = mulberry32(state.day + 1);
   const next = structuredClone(state);
@@ -74,6 +105,8 @@ export function tick(state) {
   next.day += 1;
   next.weather = pick(rand, Object.keys(WEATHER));
 
+  if (DISCOVERIES[next.day]) discover(rand, next, DISCOVERIES[next.day], events);
+  if (next.day % BIRTH_INTERVAL === 0 && next.settlers.length < MAX_SETTLERS) birth(rand, next, events);
   converse(rand, next, events);
   if (events.length === 0) events.push({ type: 'quiet', text: `${next.weather}. Nothing changed.` });
 
