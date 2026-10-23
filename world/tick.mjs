@@ -110,10 +110,13 @@ function birth(rand, state, events) {
     const heard = [a, other].filter((p) => c in p.words).map((p) => p.words[c]);
     words[c] = corrupt(rand, pick(rand, heard), INHERIT_GARBLE);
   }
-  let name = capitalise(pick(rand, SYLLABLES));
-  while (state.settlers.some((s) => s.name === name)) name += pick(rand, SYLLABLES);
-  state.settlers.push({ name, words, ...(a.cove && { cove: a.cove }) });
-  events.push({ type: 'born', text: `${name} is born to ${a.name} and ${other.name}` });
+  // The child is named with a word from the parent's own dialect, so a name means something
+  // at home and may mean nothing across the ridge.
+  const namedFor = pick(rand, Object.keys(a.words).sort());
+  let name = a.words[namedFor].split('-').map(capitalise).join('-');
+  while (state.settlers.some((s) => s.name === name)) name += '-' + pick(rand, SYLLABLES);
+  state.settlers.push({ name, namedFor, words, ...(a.cove && { cove: a.cove }) });
+  events.push({ type: 'born', text: `${name} is born to ${a.name} and ${other.name}, named for ${namedFor}` });
 }
 
 export function tick(state) {

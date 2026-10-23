@@ -120,3 +120,13 @@ test('similarity gives partial credit for near words', () => {
   assert.equal(similarity('mi', 'mi-oh'), 0.5);
   assert.ok(Math.abs(similarity('lo-ni', 'lo-ka') - 0.5) < 1e-9);
 });
+
+test('a child is named with a word from a parent, and names stay unique', () => {
+  let s = seedState();
+  for (let i = 0; i < 60; i++) s = tick(s).state;
+  const names = s.settlers.map((x) => x.name);
+  assert.equal(new Set(names).size, names.length);
+  const child = s.settlers[2];
+  assert.ok(child.namedFor in child.words);
+  assert.match(child.name, /^[A-Z]/);
+});
