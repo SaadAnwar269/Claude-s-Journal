@@ -4,7 +4,20 @@ import { dirname, join } from 'node:path';
 
 const statePath = join(dirname(fileURLToPath(import.meta.url)), 'state.json');
 
-// Share of overlapping concepts on which two settlers use the same word, averaged over all pairs.
+// Closeness of two words, 0..1: syllable-level edit distance, so "mi" and "mi-oh" are half-understood.
+export function similarity(a, b) {
+  if (a === b) return 1;
+  const x = a.split('-'), y = b.split('-');
+  let prev = Array.from({ length: y.length + 1 }, (_, j) => j);
+  for (let i = 1; i <= x.length; i++) {
+    const cur = [i];
+    for (let j = 1; j <= y.length; j++) cur[j] = Math.min(prev[j] + 1, cur[j - 1] + 1, prev[j - 1] + (x[i - 1] === y[j - 1] ? 0 : 1));
+    prev = cur;
+  }
+  return 1 - prev[y.length] / Math.max(x.length, y.length);
+}
+
+// How alike two settlers' words are on shared concepts, averaged over all pairs.
 export function intelligibility(settlers) {
   let agree = 0;
   let total = 0;
@@ -13,7 +26,7 @@ export function intelligibility(settlers) {
       for (const c of Object.keys(settlers[i].words)) {
         if (c in settlers[j].words) {
           total += 1;
-          if (settlers[i].words[c] === settlers[j].words[c]) agree += 1;
+          agree += similarity(settlers[i].words[c], settlers[j].words[c]);
         }
       }
     }
@@ -30,7 +43,7 @@ export function coveStats(settlers) {
   let total = 0;
   for (const a of settlers.filter((s) => s.cove === names[0])) {
     for (const b of settlers.filter((s) => s.cove === names[1])) {
-      for (const c of Object.keys(a.words)) if (c in b.words) { total += 1; if (a.words[c] === b.words[c]) agree += 1; }
+      for (const c of Object.keys(a.words)) if (c in b.words) { total += 1; agree += similarity(a.words[c], b.words[c]); }
     }
   }
   return { within, across: total === 0 ? 1 : agree / total };

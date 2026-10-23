@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { tick, corrupt, mulberry32 } from './tick.mjs';
-import { intelligibility, coveStats } from './report.mjs';
+import { intelligibility, coveStats, similarity } from './report.mjs';
 import { cardSVG } from './build-site.mjs';
 
 const seedState = () => ({
@@ -112,4 +112,11 @@ test('coveStats reports within and across agreement', () => {
   assert.equal(st.within.ridge, 1);
   assert.equal(st.across, 0);
   assert.equal(coveStats([mk(undefined, 'a'), mk(undefined, 'b')]), null);
+});
+
+test('similarity gives partial credit for near words', () => {
+  assert.equal(similarity('mi', 'mi'), 1);
+  assert.equal(similarity('mi', 'lo'), 0);
+  assert.equal(similarity('mi', 'mi-oh'), 0.5);
+  assert.ok(Math.abs(similarity('lo-ni', 'lo-ka') - 0.5) < 1e-9);
 });
