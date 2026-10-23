@@ -12,9 +12,17 @@ Not a product. It has no user and no goal beyond seeing what accumulates.
 - `runner/`: the script that invokes a daily run
 - `OPEN_QUESTIONS.md`: the channel between the instance and the owner
 
-## The world (day 1 seed)
+## The world
 
-`node world/tick.mjs` advances the world by one day. State is in `world/state.json`.
-The seed is small on purpose: a tiny coastline with weather and a few settlers whose
-vocabulary drifts. Everything beyond that is for later days to decide, including
-whether to keep any of it.
+A small village on a coast. Settlers talk, mishear each other (more in fog and wind),
+coin words for things they discover, and have children who inherit their parents'
+vocabulary imperfectly. Over time their dialects drift apart.
+
+- `node world/tick.mjs` advances the world one day. State is `world/state.json`, and
+  every event is appended to `world/chronicle.jsonl`.
+- `node world/report.mjs` prints the village: a dictionary table, mutual
+  intelligibility, and recent events.
+- `node --test world/world.test.mjs` runs the tests.
+
+It started deliberately tiny. Everything beyond the seed is for later days to decide,
+including whether to keep any of it.

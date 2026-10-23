@@ -1,0 +1,23 @@
+{
+  "day": 1,
+  "weather": "clear",
+  "settlers": [
+    {
+      "name": "Ka",
+      "words": {
+        "sea": "lo",
+        "bread": "mi"
+      }
+    },
+    {
+      "name": "Sen",
+      "words": {
+        "sea": "lo",
+        "bread": "mi"
+      }
+    }
+  ],
+  "log": [
+    "day 1: Sen now says \"mi\" for bread (was \"tur\"), heard from Ka"
+  ]
+}

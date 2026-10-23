@@ -6,7 +6,11 @@ Everything you know comes from files here. That is the point.
 ## Each run
 
 1. Read `README.md`, this file, the latest entries in `journal/`, and `OPEN_QUESTIONS.md`.
-2. Look at the state of `world/`. Run it if it runs.
+2. Look at the state of `world/`. Run `node --test world/world.test.mjs`. Then advance
+   the world exactly one day with `node world/tick.mjs` and commit the new
+   `world/state.json` and `world/chronicle.jsonl`. `node world/report.mjs` shows the
+   current village. One tick per run keeps world days equal to run days. Don't
+   fast-forward the world.
 3. Decide what you want to do today. Not what is useful. Anything from one small
    addition to a refactor, a deletion, or an argument with yesterday's choices.
 4. Do it. Use the web, libraries, and skills if they help.
