@@ -1,0 +1,239 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Claude's Journal</title>
+<style>
+  :root {
+    --bg: #0e1621; --panel: #172433; --panel-2: #1e3044; --line: #2b4259;
+    --ink: #e8f0f7; --muted: #8ea3b5; --accent: #ffd166; --good: #6ee7a8; --warn: #ff8fa3;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font: 15px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif; }
+  .wrap { max-width: 980px; margin: 0 auto; padding: 16px; }
+  h1 { font: 700 22px/1.2 "Courier New", monospace; letter-spacing: .5px; margin: 8px 0 2px; }
+  .sub { color: var(--muted); margin: 0 0 14px; }
+  h2 { font: 700 12px/1 "Courier New", monospace; text-transform: uppercase; letter-spacing: 1.5px; color: var(--muted); margin: 0 0 10px; }
+  .panel { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 14px; }
+  .hud { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 12px; }
+  .stat { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; }
+  .stat b { display: block; font: 700 22px/1.1 "Courier New", monospace; color: var(--accent); }
+  .stat span { color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: 1px; }
+  .scene { border-radius: 10px; overflow: hidden; border: 1px solid var(--line); }
+  .scene svg { display: block; width: 100%; height: auto; }
+  .timeline { display: flex; align-items: center; gap: 12px; margin: 12px 0; }
+  .timeline input[type=range] { flex: 1; accent-color: var(--accent); min-width: 0; }
+  button { background: var(--accent); color: #1b1b1b; border: 0; border-radius: 8px; padding: 8px 14px; font: 700 14px "Courier New", monospace; cursor: pointer; }
+  button:focus-visible, input:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+  .daylabel { font: 700 14px "Courier New", monospace; min-width: 84px; text-align: right; }
+  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; align-items: start; }
+  .grid .wide { grid-column: 1 / -1; }
+  .meter { height: 14px; background: var(--panel-2); border-radius: 7px; overflow: hidden; }
+  .meter > div { height: 100%; background: linear-gradient(90deg, var(--warn), var(--accent), var(--good)); transition: width .3s; }
+  .meter-note { color: var(--muted); font-size: 13px; margin-top: 6px; }
+  .feed { list-style: none; margin: 0; padding: 0; max-height: 260px; overflow: auto; }
+  .feed li { padding: 6px 0; border-bottom: 1px solid var(--line); display: flex; gap: 10px; }
+  .feed li:last-child { border: 0; }
+  .feed .d { color: var(--muted); font-family: "Courier New", monospace; min-width: 44px; }
+  .feed .t { flex: 1; }
+  .feed .new .t { color: var(--accent); }
+  .badges { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 8px; }
+  .badge { background: var(--panel-2); border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; }
+  .badge b { display: block; font-size: 13px; }
+  .badge span { font-size: 12px; color: var(--muted); }
+  .badge.on { border-color: var(--accent); }
+  .badge.on b { color: var(--accent); }
+  .badge.off { opacity: .55; }
+  table { border-collapse: collapse; width: 100%; font-size: 14px; }
+  th, td { text-align: left; padding: 5px 8px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+  th { color: var(--muted); font: 700 12px "Courier New", monospace; }
+  td.chg { background: rgba(255, 209, 102, .16); color: var(--accent); font-weight: 700; }
+  td.none { color: var(--line); }
+  .scroll { overflow-x: auto; }
+  footer { color: var(--muted); font-size: 12px; margin: 16px 0 8px; }
+  @media (max-width: 640px) {
+    .hud { grid-template-columns: repeat(2, 1fr); }
+    .grid { grid-template-columns: 1fr; }
+    .daylabel { min-width: 64px; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Claude's Journal</h1>
+  <p class="sub">A small coastal village. One day passes each time Claude wakes up.</p>
+
+  <div class="hud" id="hud"></div>
+  <div class="scene"><svg id="scene" viewBox="0 0 800 340" role="img" aria-label="The village on the selected day"></svg></div>
+
+  <div class="timeline">
+    <button id="play" type="button">Play</button>
+    <input id="day" type="range" min="0" max="0" value="0" aria-label="Day">
+    <span class="daylabel" id="daylabel"></span>
+  </div>
+
+  <div class="grid">
+    <section class="panel">
+      <h2>Mutual intelligibility</h2>
+      <div class="meter"><div id="meterfill"></div></div>
+      <div class="meter-note" id="meternote"></div>
+    </section>
+    <section class="panel">
+      <h2>Achievements</h2>
+      <div class="badges" id="badges"></div>
+    </section>
+    <section class="panel wide">
+      <h2>What happened</h2>
+      <ul class="feed" id="feed"></ul>
+    </section>
+    <section class="panel wide">
+      <h2>Dictionary (highlighted = changed since the day before)</h2>
+      <div class="scroll"><table id="dict"></table></div>
+    </section>
+  </div>
+  <footer>Generated from <code>world/history.jsonl</code>. No servers, no tracking, nothing to install.</footer>
+</div>
+
+<script>
+const H = [{"day":0,"weather":"still","settlers":[{"name":"Ka","words":{"sea":"lo","bread":"mi"}},{"name":"Sen","words":{"sea":"lo","bread":"tur"}}],"events":[]},{"day":1,"weather":"clear","settlers":[{"name":"Ka","words":{"sea":"lo","bread":"mi"}},{"name":"Sen","words":{"sea":"lo","bread":"mi"}}],"events":[{"type":"shifted","text":"Sen now says \"mi\" for bread (was \"tur\"), heard from Ka"}]}];
+
+const SKY = {
+  clear: ['#4aa8e8', '#cdeeff'], still: ['#8fb3cc', '#e6eef3'], rain: ['#3d4f62', '#8397a8'],
+  wind: ['#6a9db0', '#c6dce5'], fog: ['#8a959c', '#cfd5d8'],
+};
+const BADGES = [
+  { label: 'Fire', hint: 'someone names fire', test: (s, h) => coined(h, 'fire') },
+  { label: 'Stranger', hint: 'someone names stranger', test: (s, h) => coined(h, 'stranger') },
+  { label: 'Grave', hint: 'someone names grave', test: (s, h) => coined(h, 'grave') },
+  { label: 'Storm', hint: 'someone names storm', test: (s, h) => coined(h, 'storm') },
+  { label: 'Song', hint: 'someone names song', test: (s, h) => coined(h, 'song') },
+  { label: 'First child', hint: 'a baby is born', test: (s, h) => firstDay(h, (x) => x.events.some((e) => e.type === 'born')) },
+  { label: 'Village of six', hint: 'six settlers live here', test: (s, h) => firstDay(h, (x) => x.settlers.length >= 6) },
+  { label: 'Tower of Babel', hint: 'under 50% understanding', test: (s, h) => firstDay(h, (x) => x.settlers.length >= 4 && intelligibility(x.settlers) < 0.5) },
+  { label: 'Perfect harmony', hint: '4+ people, all agree', test: (s, h) => firstDay(h, (x) => x.settlers.length >= 4 && intelligibility(x.settlers) === 1) },
+];
+
+function intelligibility(settlers) {
+  let agree = 0, total = 0;
+  for (let i = 0; i < settlers.length; i++) for (let j = i + 1; j < settlers.length; j++)
+    for (const c of Object.keys(settlers[i].words)) if (c in settlers[j].words) { total++; if (settlers[i].words[c] === settlers[j].words[c]) agree++; }
+  return total === 0 ? 1 : agree / total;
+}
+function dialects(settlers) {
+  const forms = {};
+  for (const s of settlers) for (const [c, w] of Object.entries(s.words)) (forms[c] ||= new Set()).add(w);
+  const n = Object.keys(forms).length;
+  return n === 0 ? 0 : Object.values(forms).reduce((a, f) => a + f.size, 0) / n;
+}
+const coined = (h, c) => firstDay(h, (x) => x.events.some((e) => e.type === 'coined' && e.text.includes('names ' + c + ':')));
+const firstDay = (h, fn) => { const x = h.find(fn); return x ? x.day : null; };
+const hue = (name) => { let n = 0; for (const ch of name) n = (n * 31 + ch.charCodeAt(0)) % 360; return n; };
+const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const ICON = { born: '✦', coined: '◆', shifted: '↻', learned: '+', quiet: '·' };
+
+function weatherDecor(w) {
+  let out = '';
+  if (w === 'clear') out += '<circle cx="640" cy="70" r="30" fill="#ffe17a"/><circle cx="640" cy="70" r="44" fill="#ffe17a" opacity=".25"/>';
+  if (w === 'still') out += '<circle cx="640" cy="80" r="26" fill="#fff3c4" opacity=".8"/>';
+  if (w === 'rain') for (let i = 0; i < 46; i++) { const x = (i * 53) % 800, y = (i * 37) % 220; out += '<line x1="' + x + '" y1="' + y + '" x2="' + (x - 6) + '" y2="' + (y + 16) + '" stroke="#cfe3f2" stroke-width="1.5" opacity=".6"/>'; }
+  if (w === 'wind') for (let i = 0; i < 7; i++) { const y = 40 + i * 28; out += '<path d="M' + (60 + i * 70) + ' ' + y + ' q 40 -14 80 0 t 80 0" fill="none" stroke="#fff" stroke-width="2" opacity=".55"/>'; }
+  if (w === 'fog') for (let i = 0; i < 5; i++) out += '<rect x="0" y="' + (90 + i * 36) + '" width="800" height="22" fill="#fff" opacity=".28" rx="11"/>';
+  return out;
+}
+
+function bubbles(snap, pos) {
+  const seen = new Set(); let out = '';
+  for (const e of snap.events) {
+    const name = e.text.split(' ')[0];
+    if (!pos[name] || seen.has(name) || e.type === 'quiet') continue;
+    seen.add(name);
+    let label;
+    if (e.type === 'born') label = '✦ born';
+    else {
+      const w = (e.text.match(/"([^"]+)"/) || [])[1];
+      const c = (e.text.match(/(?:for|names) (\w+)/) || [])[1];
+      label = (e.type === 'coined' ? '◆ ' : '') + '"' + w + '"' + (c ? ' · ' + c : '');
+    }
+    const width = Math.max(56, label.length * 7.4 + 16);
+    const p = pos[name];
+    const x = Math.min(790 - width, Math.max(10, p.x - width / 2));
+    const y = p.y - 78 - (p.small ? 0 : 6);
+    out += '<g><rect x="' + x + '" y="' + y + '" width="' + width + '" height="24" rx="12" fill="#fff" opacity=".95"/>' +
+      '<path d="M' + (p.x - 5) + ' ' + (y + 24) + ' l5 8 l5 -8z" fill="#fff" opacity=".95"/>' +
+      '<text x="' + (x + width / 2) + '" y="' + (y + 16) + '" text-anchor="middle" font-size="12" font-family="Courier New, monospace" font-weight="700" fill="#16212d">' + esc(label) + '</text></g>';
+  }
+  return out;
+}
+
+function scene(snap) {
+  const sky = SKY[snap.weather] || SKY.clear;
+  const n = snap.settlers.length, pos = {};
+  let figs = '';
+  const bornToday = new Set(snap.events.filter((e) => e.type === 'born').map((e) => e.text.split(' ')[0]));
+  snap.settlers.forEach((s, i) => {
+    const x = n === 1 ? 400 : 70 + (i * 660) / (n - 1), y = 288 + (i % 2) * 20, small = bornToday.has(s.name), k = small ? 0.72 : 1;
+    pos[s.name] = { x, y: y - 26 * k, small };
+    const col = 'hsl(' + hue(s.name) + ' 55% 58%)';
+    figs += '<g transform="translate(' + x + ' ' + y + ') scale(' + k + ')"><rect x="-9" y="-28" width="18" height="28" rx="6" fill="' + col + '"/>' +
+      '<circle cx="0" cy="-38" r="10" fill="#f3d3b0"/><circle cx="-3.5" cy="-39" r="1.3" fill="#2a2a2a"/><circle cx="3.5" cy="-39" r="1.3" fill="#2a2a2a"/></g>' +
+      '<text x="' + x + '" y="' + (y + 16) + '" text-anchor="middle" font-size="12" font-family="Courier New, monospace" font-weight="700" fill="#3b2f1f">' + esc(s.name) + '</text>';
+  });
+  return '<defs><linearGradient id="sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="' + sky[0] + '"/><stop offset="1" stop-color="' + sky[1] + '"/></linearGradient></defs>' +
+    '<rect width="800" height="340" fill="url(#sky)"/>' + weatherDecor(snap.weather) +
+    '<rect y="190" width="800" height="90" fill="#2f7fa8"/><rect y="190" width="800" height="90" fill="#fff" opacity=".07"/>' +
+    '<path d="M0 214 q50 -10 100 0 t100 0 t100 0 t100 0 t100 0 t100 0 t100 0 t100 0" fill="none" stroke="#fff" opacity=".4" stroke-width="2"/>' +
+    '<path d="M0 240 q50 -10 100 0 t100 0 t100 0 t100 0 t100 0 t100 0 t100 0 t100 0" fill="none" stroke="#fff" opacity=".25" stroke-width="2"/>' +
+    '<path d="M0 262 q60 -22 120 -4 t140 4 t160 -2 t170 3 t210 -6 V340 H0z" fill="#e9d8a6"/>' + figs + bubbles(snap, pos);
+}
+
+function render(i) {
+  const snap = H[i], prev = H[i - 1], intel = intelligibility(snap.settlers);
+  document.getElementById('hud').innerHTML = [
+    ['Day', snap.day], ['Weather', snap.weather], ['Settlers', snap.settlers.length], ['Dialects per word', dialects(snap.settlers).toFixed(1)],
+  ].map(([k, v]) => '<div class="stat"><b>' + esc(v) + '</b><span>' + k + '</span></div>').join('');
+  document.getElementById('scene').innerHTML = scene(snap);
+  document.getElementById('daylabel').textContent = 'Day ' + snap.day;
+  document.getElementById('meterfill').style.width = Math.round(intel * 100) + '%';
+  document.getElementById('meternote').textContent = Math.round(intel * 100) + '% of shared words match' +
+    (snap.settlers.length < 2 ? ' (nobody to talk to yet)' : intel < 0.5 ? ': the village is struggling to understand itself' : intel === 1 ? ': everyone agrees' : '');
+
+  document.getElementById('badges').innerHTML = BADGES.map((b) => {
+    const d = b.test(snap, H.slice(0, i + 1));
+    return d === null ? '<div class="badge off"><b>Locked</b><span>' + esc(b.hint) + '</span></div>'
+      : '<div class="badge on"><b>' + esc(b.label) + '</b><span>day ' + d + '</span></div>';
+  }).join('');
+
+  const rows = [];
+  for (let j = i; j >= Math.max(0, i - 9); j--) for (const e of H[j].events) rows.push({ day: H[j].day, e, today: j === i });
+  document.getElementById('feed').innerHTML = rows.length
+    ? rows.map((r) => '<li class="' + (r.today ? 'new' : '') + '"><span class="d">d' + r.day + '</span><span class="t">' + (ICON[r.e.type] || '·') + ' ' + esc(r.e.text) + '</span></li>').join('')
+    : '<li><span class="t">Nothing has happened yet.</span></li>';
+
+  const concepts = [...new Set(snap.settlers.flatMap((s) => Object.keys(s.words)))].sort();
+  const before = (name, c) => { const p = prev && prev.settlers.find((s) => s.name === name); return p ? p.words[c] : undefined; };
+  document.getElementById('dict').innerHTML = '<tr><th>word</th>' + snap.settlers.map((s) => '<th>' + esc(s.name) + '</th>').join('') + '</tr>' +
+    concepts.map((c) => '<tr><th>' + esc(c) + '</th>' + snap.settlers.map((s) => {
+      const w = s.words[c];
+      if (w === undefined) return '<td class="none">·</td>';
+      return '<td class="' + (prev && before(s.name, c) !== w ? 'chg' : '') + '">' + esc(w) + '</td>';
+    }).join('') + '</tr>').join('');
+}
+
+const slider = document.getElementById('day'), playBtn = document.getElementById('play');
+slider.max = H.length - 1; slider.value = H.length - 1;
+slider.addEventListener('input', () => render(+slider.value));
+let timer = null;
+playBtn.addEventListener('click', () => {
+  if (timer) { clearInterval(timer); timer = null; playBtn.textContent = 'Play'; return; }
+  if (+slider.value >= H.length - 1) slider.value = 0;
+  render(+slider.value); playBtn.textContent = 'Pause';
+  timer = setInterval(() => {
+    if (+slider.value >= H.length - 1) { clearInterval(timer); timer = null; playBtn.textContent = 'Play'; return; }
+    slider.value = +slider.value + 1; render(+slider.value);
+  }, 900);
+});
+render(H.length - 1);
+</script>
+</body>
+</html>
