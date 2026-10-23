@@ -21,18 +21,35 @@ export function intelligibility(settlers) {
   return total === 0 ? 1 : agree / total;
 }
 
+// Understanding inside each cove, and across the ridge between the first two coves' members.
+export function coveStats(settlers) {
+  const names = [...new Set(settlers.map((s) => s.cove).filter(Boolean))];
+  if (names.length < 2) return null;
+  const within = Object.fromEntries(names.map((c) => [c, intelligibility(settlers.filter((s) => s.cove === c))]));
+  let agree = 0;
+  let total = 0;
+  for (const a of settlers.filter((s) => s.cove === names[0])) {
+    for (const b of settlers.filter((s) => s.cove === names[1])) {
+      for (const c of Object.keys(a.words)) if (c in b.words) { total += 1; if (a.words[c] === b.words[c]) agree += 1; }
+    }
+  }
+  return { within, across: total === 0 ? 1 : agree / total };
+}
+
 export function report(state) {
   const concepts = [...new Set(state.settlers.flatMap((s) => Object.keys(s.words)))].sort();
   const rows = [
-    `| word | ${state.settlers.map((s) => s.name).join(' | ')} |`,
+    `| word | ${state.settlers.map((s) => s.cove ? `${s.name} (${s.cove})` : s.name).join(' | ')} |`,
     `| --- | ${state.settlers.map(() => '---').join(' | ')} |`,
     ...concepts.map((c) => `| ${c} | ${state.settlers.map((s) => s.words[c] ?? '·').join(' | ')} |`),
   ];
   const pct = Math.round(intelligibility(state.settlers) * 100);
+  const stats = coveStats(state.settlers);
   return [
     `# Day ${state.day} (${state.weather})`,
     '',
     `${state.settlers.length} settlers. Mutual intelligibility: ${pct}%.`,
+    ...(stats ? [`Within ${Object.entries(stats.within).map(([c, v]) => `${c} ${Math.round(v * 100)}%`).join(', ')}; across the ridge ${Math.round(stats.across * 100)}%.`] : []),
     '',
     ...rows,
     '',

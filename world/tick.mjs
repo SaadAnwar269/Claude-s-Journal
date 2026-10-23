@@ -16,6 +16,12 @@ const DISCOVERIES = { 3: 'fire', 6: 'stranger', 10: 'grave', 15: 'storm', 21: 's
 const BIRTH_INTERVAL = 7;
 const MAX_SETTLERS = 8;
 const INHERIT_GARBLE = 0.15;
+// Geography (from day 3 of the world's rules): a ridge splits the village into two coves.
+// Talk stays inside a cove. Every BOAT_INTERVAL days a boat crosses if the weather allows.
+export const COVES = ['bay', 'ridge'];
+const SPLIT_DAY = 5;
+const BOAT_INTERVAL = 3;
+const BOAT_WEATHER = ['clear', 'still'];
 
 // Small deterministic PRNG so a given state always produces the same next day.
 export function mulberry32(seed) {
@@ -56,21 +62,31 @@ function initialState() {
 }
 
 // One conversation: a speaker says a word, the listener may mishear it.
-function converse(rand, state, events) {
-  if (state.settlers.length < 2) return;
-  const speaker = pick(rand, state.settlers);
-  const listener = pick(rand, state.settlers.filter((s) => s !== speaker));
+function converse(rand, state, events, pool = state.settlers, across = false) {
+  if (pool.length < 2) return;
+  const speaker = pick(rand, pool);
+  const others = across ? pool.filter((s) => s.cove !== speaker.cove) : pool.filter((s) => s !== speaker);
+  if (others.length === 0) return;
+  const listener = pick(rand, others);
   const concept = pick(rand, Object.keys(speaker.words));
   const heard = corrupt(rand, speaker.words[concept], WEATHER[state.weather]);
   const known = listener.words[concept];
 
   if (known === undefined) {
     listener.words[concept] = heard;
-    events.push({ type: 'learned', text: `${listener.name} learns "${heard}" for ${concept} from ${speaker.name}` });
+    events.push({ type: 'learned', text: `${listener.name} learns "${heard}" for ${concept} from ${speaker.name}${across ? ' off the boat' : ''}` });
   } else if (heard !== known && rand() < 0.5) {
     listener.words[concept] = heard;
-    events.push({ type: 'shifted', text: `${listener.name} now says "${heard}" for ${concept} (was "${known}"), heard from ${speaker.name}` });
+    events.push({ type: 'shifted', text: `${listener.name} now says "${heard}" for ${concept} (was "${known}"), heard from ${speaker.name}${across ? ' off the boat' : ''}` });
   }
+}
+
+// The village divides: the second half of the settlers cross the ridge and found a new cove.
+function split(state, events) {
+  const half = Math.ceil(state.settlers.length / 2);
+  state.settlers.forEach((s, i) => { s.cove = i < half ? COVES[0] : COVES[1]; });
+  const gone = state.settlers.filter((s) => s.cove === COVES[1]).map((s) => s.name);
+  events.push({ type: 'split', text: `${gone.join(' and ')} cross the ridge and settle the ${COVES[1]} cove` });
 }
 
 const coinWord = (rand) => Array.from({ length: 1 + Math.floor(rand() * 2) }, () => pick(rand, SYLLABLES)).join('-');
@@ -86,7 +102,8 @@ function discover(rand, state, concept, events) {
 // A child learns each word from one of two parents, sometimes slightly wrong.
 function birth(rand, state, events) {
   const a = pick(rand, state.settlers);
-  const other = pick(rand, state.settlers.filter((s) => s !== a));
+  const kin = state.settlers.filter((s) => s !== a && s.cove === a.cove);
+  const other = pick(rand, kin.length ? kin : state.settlers.filter((s) => s !== a));
   const concepts = new Set([...Object.keys(a.words), ...Object.keys(other.words)]);
   const words = {};
   for (const c of [...concepts].sort()) {
@@ -95,7 +112,7 @@ function birth(rand, state, events) {
   }
   let name = capitalise(pick(rand, SYLLABLES));
   while (state.settlers.some((s) => s.name === name)) name += pick(rand, SYLLABLES);
-  state.settlers.push({ name, words });
+  state.settlers.push({ name, words, ...(a.cove && { cove: a.cove }) });
   events.push({ type: 'born', text: `${name} is born to ${a.name} and ${other.name}` });
 }
 
@@ -108,7 +125,11 @@ export function tick(state) {
 
   if (DISCOVERIES[next.day]) discover(rand, next, DISCOVERIES[next.day], events);
   if (next.day % BIRTH_INTERVAL === 0 && next.settlers.length < MAX_SETTLERS) birth(rand, next, events);
-  converse(rand, next, events);
+  if (next.day === SPLIT_DAY) split(next, events);
+  if (next.settlers.some((s) => s.cove)) {
+    for (const cove of COVES) converse(rand, next, events, next.settlers.filter((s) => s.cove === cove));
+    if (next.day % BOAT_INTERVAL === 0 && BOAT_WEATHER.includes(next.weather)) converse(rand, next, events, next.settlers, true);
+  } else converse(rand, next, events);
   if (events.length === 0) events.push({ type: 'quiet', text: `${next.weather}. Nothing changed.` });
 
   next.log = [...next.log, ...events.map((e) => `day ${next.day}: ${e.text}`)].slice(-LOG_KEEP);
