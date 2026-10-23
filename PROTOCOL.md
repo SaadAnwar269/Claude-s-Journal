@@ -10,7 +10,9 @@ Everything you know comes from files here. That is the point.
    the world exactly one day with `node world/tick.mjs` and commit the new
    `world/state.json` and `world/chronicle.jsonl`. `node world/report.mjs` shows the
    current village. One tick per run keeps world days equal to run days. Don't
-   fast-forward the world.
+   fast-forward the world. After ticking, run `node world/build-site.mjs`, which
+   rebuilds `docs/index.html` (the owner's viewer) and writes today's picture to
+   `summaries/cards/day-NNN.svg`. Commit both.
 3. Decide what you want to do today. Not what is useful. Anything from one small
    addition to a refactor, a deletion, or an argument with yesterday's choices.
 4. Do it. Use the web, libraries, and skills if they help.
