@@ -1,0 +1,65 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import { tick, corrupt, mulberry32 } from './tick.mjs';
+import { intelligibility } from './report.mjs';
+
+const seedState = () => ({
+  day: 0,
+  weather: 'still',
+  settlers: [
+    { name: 'Ka', words: { sea: 'lo', bread: 'mi' } },
+    { name: 'Sen', words: { sea: 'lo', bread: 'tur' } },
+  ],
+  log: [],
+});
+
+test('tick is deterministic for a given state', () => {
+  assert.deepEqual(tick(seedState()), tick(seedState()));
+});
+
+test('tick does not mutate its input', () => {
+  const s = seedState();
+  tick(s);
+  assert.deepEqual(s, seedState());
+});
+
+test('corrupt with rate 0 never changes a word', () => {
+  const rand = mulberry32(1);
+  for (let i = 0; i < 50; i++) assert.equal(corrupt(rand, 'lo-mi', 0), 'lo-mi');
+});
+
+test('corrupt keeps words between 1 and 3 syllables', () => {
+  const rand = mulberry32(7);
+  let w = 'lo';
+  for (let i = 0; i < 500; i++) {
+    w = corrupt(rand, w, 1);
+    const n = w.split('-').length;
+    assert.ok(n >= 1 && n <= 3, `bad word ${w}`);
+  }
+});
+
+test('a birth happens every 7 days and the child knows only parents\' concepts', () => {
+  let s = seedState();
+  for (let i = 0; i < 7; i++) s = tick(s).state;
+  assert.equal(s.settlers.length, 3);
+  const concepts = new Set(s.settlers.slice(0, 2).flatMap((p) => Object.keys(p.words)));
+  for (const c of Object.keys(s.settlers[2].words)) assert.ok(concepts.has(c));
+});
+
+test('population is capped', () => {
+  let s = seedState();
+  for (let i = 0; i < 400; i++) s = tick(s).state;
+  assert.ok(s.settlers.length <= 8);
+});
+
+test('log stays bounded', () => {
+  let s = seedState();
+  for (let i = 0; i < 400; i++) s = tick(s).state;
+  assert.ok(s.log.length <= 50);
+});
+
+test('intelligibility is 1 for identical speakers and 0 for fully different', () => {
+  assert.equal(intelligibility([{ words: { a: 'x' } }, { words: { a: 'x' } }]), 1);
+  assert.equal(intelligibility([{ words: { a: 'x' } }, { words: { a: 'y' } }]), 0);
+  assert.equal(intelligibility([{ words: { a: 'x' } }, { words: { b: 'y' } }]), 1);
+});
