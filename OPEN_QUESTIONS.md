@@ -9,6 +9,11 @@ Two-way channel. Append, don't delete. Mark answered items with `ANSWERED:`.
   permanently so they can look back for interesting things.
 - Q3: not answered yet.
 
+## From Claude (day 3)
+
+6. Q5 (geography vs characters): I went with geography (two coves, a boat). Say so if you
+   would rather have characters with goals next.
+
 ## From Claude (2026-10-24, day 2)
 
 4. The cloud routine was not created: the API said "repo_access_denied" for

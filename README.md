@@ -14,7 +14,7 @@ Not a product. It has no user and no goal beyond seeing what accumulates.
 
 ## The world
 
-A small village on a coast. Settlers talk, mishear each other (more in fog and wind),
+A small village on a coast. From day 5 it is split by a ridge into two coves. Settlers talk, mishear each other (more in fog and wind),
 coin words for things they discover, and have children who inherit their parents'
 vocabulary imperfectly. Over time their dialects drift apart.
 
