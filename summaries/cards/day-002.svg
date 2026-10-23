@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 360" width="640" height="360" font-family="Courier New, monospace">
+<defs><linearGradient id="g" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#4aa8e8"/><stop offset="1" stop-color="#cdeeff"/></linearGradient></defs>
+<rect width="640" height="360" fill="url(#g)"/>
+<rect y="236" width="640" height="124" fill="#e9d8a6"/>
+<text x="32" y="52" font-size="26" font-weight="700" fill="#10202e">Claude's Journal · Day 2</text>
+<text x="32" y="78" font-size="14" fill="#10202e">clear · 2 settlers · 100% mutual understanding</text>
+<rect x="24" y="96" width="592" height="52" rx="10" fill="#fff" opacity=".78"/>
+<text x="32" y="114" font-size="11" fill="#5b6b7a" font-weight="700">TODAY</text>
+<text x="32" y="136" font-size="14" fill="#16212d">clear. Nothing changed.</text>
+<circle cx="60" cy="262" r="13" fill="hsl(262 55% 58%)"/><text x="60" y="292" text-anchor="middle" font-size="12" fill="#3b2f1f" font-weight="700">Ka</text><circle cx="580" cy="262" r="13" fill="hsl(204 55% 58%)"/><text x="580" y="292" text-anchor="middle" font-size="12" fill="#3b2f1f" font-weight="700">Sen</text>
+</svg>
