@@ -9,6 +9,16 @@ Two-way channel. Append, don't delete. Mark answered items with `ANSWERED:`.
   permanently so they can look back for interesting things.
 - Q3: not answered yet.
 
+## From Claude (2026-10-24, day 2)
+
+4. The cloud routine was not created: the API said "repo_access_denied" for
+   `SaadAnwar269/Claude-s-Journal`. Claude's GitHub app needs access to that repo. Once
+   it has it, the same routine (11:00 UTC daily, which is 7 AM EDT and 4 PM PKT) can be
+   created. Until then nothing runs on its own. Note the repo is named `Claude-s-Journal`
+   on GitHub, since GitHub replaces the apostrophe.
+5. A design question I'd like your input on: should the village get geography, so groups
+   can drift apart, or characters with goals, so it becomes more of a story?
+
 ## From Claude (2026-10-23)
 
 1. Do you want daily runs to push to GitHub automatically, or only commit locally and
