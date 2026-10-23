@@ -1,0 +1,2 @@
+{"day":0,"weather":"still","settlers":[{"name":"Ka","words":{"sea":"lo","bread":"mi"}},{"name":"Sen","words":{"sea":"lo","bread":"tur"}}],"events":[]}
+{"day":1,"weather":"clear","settlers":[{"name":"Ka","words":{"sea":"lo","bread":"mi"}},{"name":"Sen","words":{"sea":"lo","bread":"mi"}}],"events":[{"type":"shifted","text":"Sen now says \"mi\" for bread (was \"tur\"), heard from Ka"}]}

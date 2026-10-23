@@ -5,6 +5,7 @@ import { dirname, join } from 'node:path';
 const here = dirname(fileURLToPath(import.meta.url));
 const statePath = join(here, 'state.json');
 const chroniclePath = join(here, 'chronicle.jsonl');
+const historyPath = join(here, 'history.jsonl');
 
 // Chance that a heard word is garbled, by weather. Fog and wind make people mishear.
 export const WEATHER = { fog: 0.6, wind: 0.5, rain: 0.4, clear: 0.2, still: 0.15 };
@@ -119,5 +120,8 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
   const { state: next, events } = tick(state);
   writeFileSync(statePath, JSON.stringify(next, null, 2) + '\n');
   appendFileSync(chroniclePath, events.map((e) => JSON.stringify({ day: next.day, weather: next.weather, ...e })).join('\n') + '\n');
+  // Full snapshot per day so the viewer can replay history even if the rules later change.
+  const { day, weather, settlers } = next;
+  appendFileSync(historyPath, JSON.stringify({ day, weather, settlers, events }) + '\n');
   for (const e of events) console.log(`day ${next.day}: ${e.text}`);
 }
