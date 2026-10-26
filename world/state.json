@@ -1,6 +1,6 @@
 {
-  "day": 3,
-  "weather": "clear",
+  "day": 4,
+  "weather": "still",
   "settlers": [
     {
       "name": "Ka",
@@ -21,6 +21,7 @@
   "log": [
     "day 1: Sen now says \"mi\" for bread (was \"tur\"), heard from Ka",
     "day 2: clear. Nothing changed.",
-    "day 3: Ka names fire: \"ka\""
+    "day 3: Ka names fire: \"ka\"",
+    "day 4: still. Nothing changed."
   ]
 }

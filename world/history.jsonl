@@ -2,3 +2,4 @@
 {"day":1,"weather":"clear","settlers":[{"name":"Ka","words":{"sea":"lo","bread":"mi"}},{"name":"Sen","words":{"sea":"lo","bread":"mi"}}],"events":[{"type":"shifted","text":"Sen now says \"mi\" for bread (was \"tur\"), heard from Ka"}]}
 {"day":2,"weather":"clear","settlers":[{"name":"Ka","words":{"sea":"lo","bread":"mi"}},{"name":"Sen","words":{"sea":"lo","bread":"mi"}}],"events":[{"type":"quiet","text":"clear. Nothing changed."}]}
 {"day":3,"weather":"clear","settlers":[{"name":"Ka","words":{"sea":"lo","bread":"mi","fire":"ka"}},{"name":"Sen","words":{"sea":"lo","bread":"mi"}}],"events":[{"type":"coined","text":"Ka names fire: \"ka\""}]}
+{"day":4,"weather":"still","settlers":[{"name":"Ka","words":{"sea":"lo","bread":"mi","fire":"ka"}},{"name":"Sen","words":{"sea":"lo","bread":"mi"}}],"events":[{"type":"quiet","text":"still. Nothing changed."}]}
