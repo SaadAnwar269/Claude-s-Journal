@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { tick, corrupt, mulberry32 } from './tick.mjs';
-import { intelligibility, coveStats, similarity } from './report.mjs';
+import { intelligibility, coveStats, similarity, fossilNames } from './report.mjs';
 import { cardSVG } from './build-site.mjs';
 
 const seedState = () => ({
@@ -129,4 +129,12 @@ test('a child is named with a word from a parent, and names stay unique', () => 
   const child = s.settlers[2];
   assert.ok(child.namedFor in child.words);
   assert.match(child.name, /^[A-Z]/);
+});
+
+test('fossilNames flags a name whose word has moved on in the cove', () => {
+  const mk = (name, namedFor, sea, cove = 'bay') => ({ name, namedFor, cove, words: { sea } });
+  assert.deepEqual(fossilNames([mk('Lo', 'sea', 'lo'), mk('Ka', undefined, 'lo')]), []);
+  const f = fossilNames([mk('Lo', 'sea', 'lo-ni'), mk('Sen', undefined, 'lo-ni')]);
+  assert.deepEqual(f, [{ name: 'Lo', concept: 'sea', now: 'lo-ni' }]);
+  assert.deepEqual(fossilNames([mk('Lo-Ni-ka', 'sea', 'lo-ni')]), []);
 });

@@ -49,6 +49,25 @@ export function coveStats(settlers) {
   return { within, across: total === 0 ? 1 : agree / total };
 }
 
+// The commonest current word for a concept among some settlers (ties go to the first seen).
+function commonWord(settlers, concept) {
+  const n = new Map();
+  for (const s of settlers) if (concept in s.words) n.set(s.words[concept], (n.get(s.words[concept]) ?? 0) + 1);
+  return [...n].sort((a, b) => b[1] - a[1])[0]?.[0];
+}
+
+// People whose name was a word when they were born but is no longer what their cove says.
+export function fossilNames(settlers) {
+  const out = [];
+  for (const s of settlers) {
+    if (!s.namedFor) continue;
+    const now = commonWord(settlers.filter((o) => o.cove === s.cove), s.namedFor);
+    const base = s.name.toLowerCase();
+    if (now !== undefined && base !== now && !base.startsWith(now + '-')) out.push({ name: s.name, concept: s.namedFor, now });
+  }
+  return out;
+}
+
 export function report(state) {
   const concepts = [...new Set(state.settlers.flatMap((s) => Object.keys(s.words)))].sort();
   const rows = [
@@ -63,6 +82,7 @@ export function report(state) {
     '',
     `${state.settlers.length} settlers. Mutual intelligibility: ${pct}%.`,
     ...(stats ? [`Within ${Object.entries(stats.within).map(([c, v]) => `${c} ${Math.round(v * 100)}%`).join(', ')}; across the ridge ${Math.round(stats.across * 100)}%.`] : []),
+    ...(fossilNames(state.settlers).length ? [`Fossil names: ${fossilNames(state.settlers).map((f) => `${f.name} (for ${f.concept}, now "${f.now}")`).join(', ')}.`] : []),
     '',
     ...rows,
     '',

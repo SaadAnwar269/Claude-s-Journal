@@ -133,6 +133,10 @@ function intelligibility(settlers) {
     for (const c of Object.keys(settlers[i].words)) if (c in settlers[j].words) { total++; agree += similarity(settlers[i].words[c], settlers[j].words[c]); }
   return total === 0 ? 1 : agree / total;
 }
+function fossils(settlers) {
+  const now = (s, c) => { const n = {}; for (const o of settlers) if (o.cove === s.cove && c in o.words) n[o.words[c]] = (n[o.words[c]] || 0) + 1; return Object.entries(n).sort((a, b) => b[1] - a[1])[0]?.[0]; };
+  return settlers.filter((s) => { if (!s.namedFor) return false; const w = now(s, s.namedFor), b = s.name.toLowerCase(); return w !== undefined && b !== w && !b.startsWith(w + '-'); }).length;
+}
 function dialects(settlers) {
   const forms = {};
   for (const s of settlers) for (const [c, w] of Object.entries(s.words)) (forms[c] ||= new Set()).add(w);
@@ -210,6 +214,7 @@ function render(i) {
   const snap = H[i], prev = H[i - 1], intel = intelligibility(snap.settlers);
   document.getElementById('hud').innerHTML = [
     ['Day', snap.day], ['Weather', snap.weather], ['Settlers', snap.settlers.length], ['Dialects per word', dialects(snap.settlers).toFixed(1)],
+    ...(snap.settlers.some((s) => s.namedFor) ? [['Fossil names', fossils(snap.settlers)]] : []),
   ].map(([k, v]) => '<div class="stat"><b>' + esc(v) + '</b><span>' + k + '</span></div>').join('');
   document.getElementById('scene').innerHTML = scene(snap);
   document.getElementById('daylabel').textContent = 'Day ' + snap.day;
